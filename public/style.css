@@ -1,0 +1,72 @@
+html,
+body,
+*:not(i) {
+    font-family: 'DroidArabicKufiRegular';
+   font-weight: normal;
+   font-style: normal;
+}
+/* * { background-color: rgba(255,0,0,.2); }
+* * { background-color: rgba(0,255,0,.2); }
+* * * { background-color: rgba(0,0,255,.2); }
+* * * * { background-color: rgba(255,0,255,.2); }
+* * * * * { background-color: rgba(0,255,255,.2); }
+* * * * * * { background-color: rgba(255,255,0,.2); }
+* * * * * * * { background-color: rgba(255,0,0,.2); }
+* * * * * * * * { background-color: rgba(0,255,0,.2); }
+* * * * * * * * * { background-color: rgba(0,0,255,.2); } */
+
+body {
+    margin: 0 auto;
+    padding: 0;
+}
+
+.el-main {
+    padding: 0px !important;
+}
+.el-input--prefix .el-input__inner {
+    padding-left: unset !important;
+    padding-right: 30px;
+}
+.el-input__prefix {
+    left: unset !important;
+    right: 5px;
+}
+
+.el-input__suffix {
+    right: unset !important;
+    left: 5px;
+}
+
+.el-button [class*=el-icon-]+span {
+    margin-left: unset !important;
+    margin-right: 5px;
+}
+
+.el-notification__closeBtn {
+    right: unset !important;
+    left: 15px;
+}
+
+.el-message-box__status+.el-message-box__message {
+    padding-right: 36px !important;
+    padding-left: 12px !important;
+    text-align: right;
+}
+
+.el-message-box__status {
+    right: 0;
+}
+
+.el-message-box__title {
+    text-align: right;
+}
+
+.el-message-box__headerbtn {
+    right: unset !important;
+    left: 15px;
+}
+
+.el-message-box__btns button:nth-child(2) {
+    margin-right: 10px;
+    margin-left: unset !important;
+}
