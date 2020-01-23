@@ -13,7 +13,7 @@
           </el-menu-item>
 
           <el-menu-item route="/users" index="2">
-            <i class="el-icon-user-solid"></i>
+            <i class="el-icon-user"></i>
             <span slot="title">المستخدمين</span>
           </el-menu-item>
 
@@ -22,9 +22,14 @@
             <span slot="title">التصنيفات</span>
           </el-menu-item>
 
-          <el-menu-item index="4">
-            <i class="el-icon-s-goods"></i>
+          <el-menu-item route="/items" index="4">
+            <i class="el-icon-goods"></i>
             <span slot="title">المواد</span>
+          </el-menu-item>
+
+          <el-menu-item route="/" index="5">
+            <i class="el-icon-chat-line-square"></i>
+            <span slot="title">الدعم الفني</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -38,7 +43,7 @@
 
           <el-menu mode="horizontal">
              <el-submenu index="1">
-              <template slot="title"><i class="el-icon-user"></i></template>
+              <template slot="title"><span>{{ username() }}</span> <i class="el-icon-user-solid"></i></template>
               <el-menu-item @click="logout()" index="1-1">
                 تسجيل الخروج
               </el-menu-item>
@@ -56,11 +61,12 @@
 </template>
 
 <script>
+import APIS from './baseUrl';
 export default {
   data() {
     return {
       isLoggedIn: false,
-      isCollapsedMenu: true,
+      isCollapsedMenu: false,
       beforeCreate: '',
       beforeUpdate: '',
       mainElementClass: false,
@@ -81,7 +87,6 @@ export default {
       this.loggedIn();
     }, 300);
     this.activeIndex = this.$route.path;
-    // this.fetchIng();
   },
   methods: {
     // check if login
@@ -125,15 +130,10 @@ export default {
       }
     },
 
-    // fetching data and notify
-    fetchIng() {
-      setInterval(() => {
-        this.$notify({
-          title: 'done',
-          message: 'done done',
-          type: 'success'
-        });
-      }, 2000);
+    username: () => {
+      let info = JSON.parse(localStorage.getItem('loggedInUser'));
+      let name = info.username;
+      return name;
     }
   },
 }
@@ -184,6 +184,8 @@ export default {
         }
     }
 
+    
+
     .el-container {
       min-height: 100vh;
       height: 100%;
@@ -232,6 +234,8 @@ export default {
           }
           i {
             color: white;
+            margin-right: unset !important;
+            margin-left: 10px;
           }
         }
       }
@@ -269,5 +273,16 @@ export default {
         }
       }
     }
+  }
+  .el-select-dropdown.is-multiple .el-select-dropdown__item.selected span {
+    margin-right: 20px;
+  }
+
+  .el-select-dropdown.is-multiple .el-select-dropdown__item.selected:after {
+    right: 40px;
+  }
+
+  .el-select .el-tag {
+    margin: 2px 6px 2px 6px !important;
   }
 </style>

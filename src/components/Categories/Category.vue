@@ -36,7 +36,7 @@
                       </td>
                       <td>
                           <el-button @click="updateModal = true; uid = cates.id; beforeUpdate(uid)" type="warning" icon="el-icon-edit"></el-button>
-                          <el-button @click="remove(cates.id, index)" type="danger" icon="el-icon-delete"></el-button>
+                          <!-- <el-button @click="remove(cates.id, index)" type="danger" icon="el-icon-delete"></el-button> -->
                       </td>
                   </tr>
               </tbody>
@@ -103,7 +103,6 @@ export default {
     data() {
         return {
             search: '',
-            s: '',
             cateData: [],
             createModal: false,
             updateModal: false,
@@ -286,7 +285,6 @@ export default {
                     this.endPageLoading();
                     this.buttonLoading = false;
                     this.notify('error', err.response.status, 'حدث خطاء ما');
-                    console.error(err.response);
                 });   
             }
         },
@@ -309,7 +307,6 @@ export default {
                     this.notify('success','','تم الحذف بنجاح');
                 }).catch((e) => {
                     this.notify('error' , '','تم الغاء الاجراء');
-                    console.error(e.response);
                 });
             }).catch(() => {
                 this.notify('error' , '','تم الغاء الاجراء');
@@ -333,7 +330,9 @@ export default {
                 }
                 this.endPageLoading();
             }).catch((err) => {
-                console.error(err.response);
+                if(!err.status) {
+                    this.notify("error", "","لا يوجد اتصال بالانترنت","3000");
+                }
                 this.endPageLoading();
             });
         },

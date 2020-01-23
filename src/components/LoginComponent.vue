@@ -1,6 +1,6 @@
 <template>
   <div class="login-form">
-    <el-form :model="loginForm" label-position="top">
+    <el-form :model="loginForm" label-position="top" @submit.prevent="login()">
         <el-form-item label="رقم الهاتف">
             <el-input placeholder="رقم الهاتف" v-model="loginForm.mobile">
                 <i class="el-icon-user-solid" slot="prefix"></i>
@@ -13,7 +13,7 @@
             </el-input>
         </el-form-item>
 
-        <el-button type="primary" icon="el-icon-right" @click.prevent="login()" :loading="loginButtonLoading">تسجيل الدخول</el-button>
+        <el-button type="primary" native-type="submit" icon="el-icon-right" @click.prevent="login()" :loading="loginButtonLoading">تسجيل الدخول</el-button>
     </el-form>
   </div>
 </template>
@@ -176,10 +176,10 @@ export default {
                     this.saveUser(storedObject);
                     this.changePage('/', 'home');
                 }).catch(e => {
-                    let error = JSON.stringify(e)
                     this.notify('error', '', 'حدث خطاء في تسجيل الدخول');
                     this.loginButtonLoading = false;
                     this.endPageLoading();
+                    console.error(e.response)
                 });
             }
         }

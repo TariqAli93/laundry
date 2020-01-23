@@ -1,5 +1,6 @@
 <template>
   <div>
+      <!-- create new user -->
        <div>
         <el-dialog title="انشاء مستخدم جديد" :visible.sync="createUser">
             <el-form :model="createForm" label-position="top">
@@ -62,6 +63,7 @@
         </el-dialog>
     </div>
 
+    <!-- edit privilege -->
     <div>
         <el-dialog title="تعديل الصلاحيات" :visible.sync="updatePrivilegeModal" @close="isAdminChecked = false; isSuperAdminChecked = false; isVendorChecked = false;">
             <el-form label-position="top">
@@ -86,6 +88,7 @@
         </el-dialog>
     </div>
 
+    <!-- update user -->
     <div>
         <el-dialog title="تعديل المستخدم" :visible.sync="editModal" @close="isUserActive = false;">
             <el-form :model="editForm" label-position="top">
@@ -136,6 +139,65 @@
         </el-dialog>
     </div>
 
+    <!-- add categories -->
+    <div>
+        <el-dialog title="اضافة تصنيفات" :visible.sync="categoiresModal" @close="selectedUser = '';categoriesSelect = []">
+            <el-row style="width: 100%">
+                <label>اختر التصنيف</label>
+                <el-col :span="24">
+                    <el-select
+                        style="width: 100%"
+                        v-model="categoriesSelect"
+                        @change="getCategoriesArray"
+                        multiple
+                        placeholder="قم بأختيار التصنيف">
+                        <el-option
+                        v-for="category in categories"
+                        :key="category.id"
+                        :label="category.name"
+                        :value="category.id">
+                        </el-option>
+                    </el-select>
+                </el-col>
+            </el-row>
+
+            <el-button type="primary" style="margin-top: 30px;" @click="saveUserCatefories();" icon="el-icon-plus">حفظ التعديلات</el-button>
+        </el-dialog>
+    </div>
+
+    <!-- add item to category -->
+    <el-dialog title="ربط المادة بالتصنيف" :visible.sync="itemsModal">
+        <el-form :model="addItemTocategory" label-position="top" style="width: 100%">
+            <el-form-item label="اختر التصنيف" style="width: 100%">
+                <el-select style="width: 100%" v-model="addItemTocategory.categoryId" placeholder="قم باختيار التصنيف">
+                    <el-option
+                    v-for="category in addItemTocategory.categories"
+                    :key="category.id"
+                    :label="category.category.name"
+                    :value="category.categoryId">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            
+            <el-form-item label="اختر المادة" style="width: 100%">
+                <el-select style="width: 100%" v-model="addItemTocategory.itemId" placeholder="قم باختيار المادة">
+                    <el-option
+                    v-for="item in addItemTocategory.items"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="السعر" style="width: 100%">
+                <el-input v-model="addItemTocategory.price" placeholder="سعر المادة"></el-input>
+            </el-form-item>
+
+            <el-button @click="addItemCategory()" type="primary" icon="el-icon-plus">حفظ المادة</el-button>
+        </el-form>
+    </el-dialog>
+    <!-- add user button and search -->
     <div class="adduser" style="margin-bottom: 30px">
         <el-row>
             <el-col :span="12">
@@ -147,7 +209,8 @@
         </el-row>
     </div>
 
-    <table class="el-table el-table__body">
+    <!-- user table -->
+    <table class="el-table el-table__body" style="table-layout: auto; width: 100%">
         <thead>
             <tr>
                 <th scope="row">اسم المستخدم</th>
@@ -185,9 +248,21 @@
                 </td>
                 <td>
                     <el-row class="custom-button-row">
-                        <el-button type="primary" @click="editModal = true; getUserInfo(data); userId = data.id" icon="el-icon-edit"></el-button>
-                        <el-button @click="updatePrivilegeModal = true; privilegRoles = data.userRole; userId = data.id; getRoleById(privilegRoles)" type="info" icon="el-icon-set-up"></el-button>
-                        <el-button type="danger" @click="remove(data.id, index)" icon="el-icon-delete"></el-button>
+                        <el-tooltip placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
+                            <el-button type="primary" @click="editModal = true; getUserInfo(data); userId = data.id" icon="el-icon-edit"></el-button>
+                        </el-tooltip>
+                        <el-tooltip placement="bottom" content="اضافة / عرض التصنيف" effect="light" :visible-arrow="false">
+                            <el-button v-if="data.rolesString.includes(3)" type="warning" icon="el-icon-collection-tag" @click="selectedUser = data.id; checkCategories(data.id)"></el-button>
+                        </el-tooltip>
+                        <el-tooltip placement="bottom" content="اضافة المواد" effect="light" :visible-arrow="false">
+                            <el-button @click="itemsModal = true; addItemTocategory.userId = data.id; getUserCategories(data.id);" v-if="data.rolesString.includes(3)" type="success" icon="el-icon-goods"></el-button>
+                        </el-tooltip>
+                        <el-tooltip placement="bottom" content="تعديل الصلاحيات" effect="light" :visible-arrow="false">
+                            <el-button @click="updatePrivilegeModal = true; userId = data.id; getRoleById(data.userRole)" type="info" icon="el-icon-set-up"></el-button>
+                        </el-tooltip>
+                        <el-tooltip placement="bottom" content="حذف" effect="light" :visible-arrow="false">
+                            <el-button type="danger" @click="remove(data.id, index)" icon="el-icon-delete"></el-button>
+                        </el-tooltip>
                     </el-row>
                 </td>
             </tr>
@@ -206,16 +281,31 @@ export default {
       return {
         tableData: [],
         search: '',
+        isUserActive: false,
         editModal: false,
         createUser: false,
-        updateIsActive: false,
         userId: '',
         isSuperAdminChecked: false,
         isAdminChecked: false,
         isVendorChecked: false,
-        privilegRoles: '',
         updatePrivilegeModal: false,
         buttonLoading: false,
+        categories: [],
+        categoriesSelect: [],
+        addItemTocategory: {
+            items: '',
+            itemId: [],
+            categories: [],
+            categoryId: '',
+            price: '',
+            userId: ''
+        },
+        itemsModal: false,
+        selectedItems: '',
+        selectedCategories: [],
+        selectedUser: '',
+        categoiresModal: false,
+        isUserHavCategories: 88,
         editForm: {
             username: '',
             mobileNumber: '',
@@ -326,11 +416,12 @@ export default {
               "id": 18
             }
           ],
-        isUserActive: false,
       }
     },
     mounted() {
         this.getUsers();
+        this.getAllCategories();
+        this.gteAllitems();
     },
     computed: {
         filteredUsers: function() {
@@ -407,7 +498,7 @@ export default {
             }
         },
 
-        // get user info
+        // get user info for update modal
         getUserInfo(data) {
             let id = data.id;
             let self = this;
@@ -462,13 +553,13 @@ export default {
                 this.endPageLoading();
             }).catch((err) => {
                 if(err.response === 401) {
-                    this.notify('error','','لا توجد صلاحيات كافية');
+                    this.notify('error','','تم انهاء مهلة الاتصال');
                 } else if(err.response === 400) {
                     this.notify('error','','حدثت مشكلة في ارسال البيانات');
                 } else if(err.response === 404) {
                     this.notify('error','','حدثت مشكلة في الحصول على الطلب');
                 } else {
-                    this.notify('error','','حدثت مشكلة في الاتصال');
+                    this.notify("error", "","لا يوجد اتصال بالانترنت","3000");
                 }
                 
                 this.endPageLoading();
@@ -532,7 +623,7 @@ export default {
                             this.notify('error', '', 'لا يمكنك اضافة هذا النوع من المستخدمين');
                             this.buttonLoading = false;
                         }
-                        console.log(err.response);
+                        console.error(err.response);
                         this.buttonLoading = false;
                     });
                 } else {
@@ -553,7 +644,7 @@ export default {
                             this.notify('error', '', 'لا يمكنك اضافة هذا النوع من المستخدمين');
                             this.buttonLoading = false;
                         }
-                        console.log(err.response);
+                        console.error(err.response);
                         this.buttonLoading = false;
                     });
                 }
@@ -623,10 +714,10 @@ export default {
                     this.tableData.splice(index, 1);
                     this.notify('success', '','تم حذف المستخدم بنجاح ');
                 }).catch((e) => {
-                    console.log(e.response);
+                    console.error(e.response);
                 });
             }).catch(() => {
-                console.log(false);
+                this.notify('error','','تم الغاء الاجراء');
             });
         },
 
@@ -652,19 +743,155 @@ export default {
                 this.getUsers();
                 this.buttonLoading = false;
                 this.updatePrivilegeModal = false;
-                console.log(result);
             }).catch((e) => {
                 this.notify('error', '', 'حدث خطأ في تعديل البيانات');
                 this.buttonLoading = false;
                 this.updatePrivilegeModal = false;
                 console.error(e.response);
             });
+        },
+        // get all categories
+        getAllCategories() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            this.startPageLoading();
+            self.axios.get(`${APIS.API_URL}/category/getCategories`, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then((result) => {
+                this.categories = result.data;
+                this.endPageLoading();
+            }).catch((err) => {
+                console.error(err.response);
+                this.endPageLoading();
+            });
+        },
+        // get selected category
+        getCategoriesArray(e) {
+            this.selectedCategories = e;
+        },
+
+        getUserCategories(id) {
+            let self = this,
+                jsonInfo = JSON.parse(localStorage.getItem('loggedInUser')),
+                token = jsonInfo.token;
+            
+            self.axios.get(`${APIS.API_URL}/category/getUserCategories?userId=${id}`, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then((response) => {
+                this.addItemTocategory.categories = response.data;
+            }).catch(e => {
+                console.error(e.response);
+            });
+        },
+
+        // save the categories to selected user
+        saveUserCatefories() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            let object = {};
+            if(this.isEmpty(this.categoriesSelect) || this.isEmpty(this.selectedUser)) {
+                self.notify('error','','يرجا اختيار التصنيفات و المستخدم');
+            } else {
+                object = {
+                    userId: this.selectedUser,
+                    categories: this.selectedCategories 
+                }
+
+                self.axios.post(`${APIS.API_URL}/category/addUserCategories`, object, {
+                    headers: {
+                        Authorization: 'bearer ' + token
+                    }
+                }).then((result) => {
+                    this.categoiresModal = false;
+                    this.notify('success', '','تم اضافة التصنيفات بنجاح');
+                }).catch(e => {
+                    console.error(e.response);
+                    this.notify("error", e.response.status, e.response.statusText);
+                });
+            }
+        },
+
+        // check user categories
+        checkCategories(id) {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            this.startPageLoading();
+
+            self.axios.get(`${APIS.API_URL}/category/getUserCategories?userId=${id}`, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then(response => {
+                if(response.data.length > 0) {
+                    this.categoiresModal = false;
+                    this.endPageLoading();
+                    this.$router.push({path: `categories/${this.selectedUser}`, params: this.selectedUser});
+                } else {
+                    this.endPageLoading();
+                    this.categoiresModal = true;
+                }
+            }).catch(error => {
+                console.error(error.response);
+            });
+        },
+
+        gteAllitems() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+
+            self.axios.get(`${APIS.API_URL}/items/getItems`, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then(response => {
+                this.addItemTocategory.items = response.data;
+            }).catch(e => {
+                this.notify('error', e.response.status , e.response.statusText);
+            });
+        },
+
+        addItemCategory() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            let obj = {
+                userId: this.addItemTocategory.userId,
+                categoryId: this.addItemTocategory.categoryId,
+                itemId: this.addItemTocategory.itemId,
+                price: this.addItemTocategory.price
+            }
+
+            self.axios.post(`${APIS.API_URL}/items/addUserItems`, obj, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then(response => {
+                this.itemsModal = false;
+                this.notify('success', '','تم اضافة المادة بنجاح');
+            }).catch(e => {
+                if(e.response.data === '-20012') {
+                    this.notify("error", e.response.status, 'هذه المادة تم اضافتها مسبقا');
+                } else {
+                    this.notify("error", e.response.status, e.response.statusText);
+                }
+            });
         }
-    },
+    }
 }
 </script>
 
 <style lang="scss">
+    .el-select .el-tag__close.el-icon-close {
+        right: 5px !important;
+    }
     .el-button+.el-button {
         margin-left: unset !important;
         margin-right: 15px;
