@@ -25,7 +25,7 @@
                         <div class="grid-content bg-purple">
                             <el-form-item label="نوع الحساب">
                                 <el-select v-model="createForm.accountType" tabindex="4" style="width: 100%">
-                                    <el-option v-for="option in createForm.urlOption" :key="option.value" :label="option.label" :value="option.value"></el-option>
+                                    <el-option v-for="option in createForm.urlOption" :key="option.value" :label="option.label" :value="option.value" v-if="loggedInUserInfo().includes(option.role)"></el-option>
                                 </el-select>
                             </el-form-item>
                         </div>
@@ -197,6 +197,51 @@
             <el-button @click="addItemCategory()" type="primary" icon="el-icon-plus">حفظ المادة</el-button>
         </el-form>
     </el-dialog>
+
+
+    <el-dialog title="اضافة محل" :visible.sync="addVendorModal">
+        <el-form :model="addVendor" label-position="top">
+            <el-row :gutter="20">
+                <el-col :span="12">
+                    <el-form-item label="رقم الهاتف">
+                        <el-input v-model="addVendor.mobileNumber" placeholder="رقم الهاتف" tabindex="2"></el-input>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                    <el-form-item label="اسم المحل">
+                        <el-input v-model="addVendor.name" placeholder="اسم المحل" tabindex="1"></el-input>
+                    </el-form-item>
+                </el-col>
+                
+                <el-col :span="12">
+                    <el-form-item label="المنطقة">
+                        <el-input v-model="addVendor.district" placeholder="المنطقة" tabindex="4"></el-input>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                    <el-form-item label="المحافظة">
+                        <el-select v-model="addVendor.government" placeholder="يرجا اختيار المحافظة" tabindex="3">
+                            <el-option v-for="gove in governorate" :key="gove.id" :value="gove.name" :label="gove.name"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                    <el-form-item label="الاستلام من المنزل">
+                        <el-select v-model="addVendor.homeRecieve" placeholder="الاستلام من المنزل" style="width: 100%" tabindex="5">
+                            <el-option value="1" label="تفعيل"></el-option>
+                            <el-option value="0" label="الغاء تفعيل"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+
+            <el-button style="margin-top: 30px" type="primary" icon="el-icon-plus" :loading="buttonLoading" @click="doAddVendor();" tabindex="6"> حفظ المحل</el-button>
+        </el-form>
+    </el-dialog>
+
     <!-- add user button and search -->
     <div class="adduser" style="margin-bottom: 30px">
         <el-row>
@@ -213,7 +258,8 @@
     <table class="el-table el-table__body" style="table-layout: auto; width: 100%">
         <thead>
             <tr>
-                <th scope="row">اسم المستخدم</th>
+                <th scope="row">#</th>
+                <th>اسم المستخدم</th>
                 <th>رقم الهاتف</th>
                 <th>الصلاحيات</th>
                 <th>تاريخ الانظمام</th>
@@ -225,6 +271,7 @@
         </thead>
         <tbody>
             <tr class="el-table__row" v-for="(data, index) in filteredUsers" :key="data.id">
+                <td>{{data.id}}</td>
                 <td>{{data.username}}</td>
                 <td>{{data.mobileNumber}}</td>
                 <td>
@@ -248,19 +295,27 @@
                 </td>
                 <td>
                     <el-row class="custom-button-row">
-                        <el-tooltip placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin')" placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
                             <el-button type="primary" @click="editModal = true; getUserInfo(data); userId = data.id" icon="el-icon-edit"></el-button>
                         </el-tooltip>
-                        <el-tooltip placement="bottom" content="اضافة / عرض التصنيف" effect="light" :visible-arrow="false">
+
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin') || loggedInUserInfo().includes('Admin')" placement="bottom" content="اضافة / عرض التصنيف" effect="light" :visible-arrow="false">
                             <el-button v-if="data.rolesString.includes(3)" type="warning" icon="el-icon-collection-tag" @click="selectedUser = data.id; checkCategories(data.id)"></el-button>
                         </el-tooltip>
-                        <el-tooltip placement="bottom" content="اضافة المواد" effect="light" :visible-arrow="false">
+
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin') || loggedInUserInfo().includes('Admin')" placement="bottom" content="اضافة المواد" effect="light" :visible-arrow="false">
                             <el-button @click="itemsModal = true; addItemTocategory.userId = data.id; getUserCategories(data.id);" v-if="data.rolesString.includes(3)" type="success" icon="el-icon-goods"></el-button>
                         </el-tooltip>
-                        <el-tooltip placement="bottom" content="تعديل الصلاحيات" effect="light" :visible-arrow="false">
+
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin')" placement="bottom" content="تعديل الصلاحيات" effect="light" :visible-arrow="false">
                             <el-button @click="updatePrivilegeModal = true; userId = data.id; getRoleById(data.userRole)" type="info" icon="el-icon-set-up"></el-button>
                         </el-tooltip>
-                        <el-tooltip placement="bottom" content="حذف" effect="light" :visible-arrow="false">
+
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin') || loggedInUserInfo().includes('Admin')" placement="bottom" content="اضافة / تعديل المحل" effect="light" :visible-arrow="false">
+                            <el-button v-if="data.rolesString.includes(3)" type="primary" @click="selectedUser = data.id; checkVendor(data.id);" icon="el-icon-s-shop"></el-button>
+                        </el-tooltip>
+
+                        <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin')" placement="bottom" content="حذف" effect="light" :visible-arrow="false">
                             <el-button type="danger" @click="remove(data.id, index)" icon="el-icon-delete"></el-button>
                         </el-tooltip>
                     </el-row>
@@ -269,6 +324,18 @@
         </tbody>
     </table>
 
+    <el-pagination 
+    style="padding-top: 30px; display: flex; align-items: center; justify-content: center;" 
+    background 
+    layout='prev, pager, next, jumper, ->, total' 
+    :total="pagination.total" 
+    :page-size="pagination.page_size" 
+    :pager-count="5"
+    :current-page="pagination.current_page" 
+    :next-text="pagination.next_text" 
+    :prev-text="pagination.prev_text"
+    @current-change="paginationCurrentChange($event)">
+    </el-pagination>
   </div>
 </template>
 
@@ -280,6 +347,16 @@ export default {
     data() {
       return {
         tableData: [],
+        pagination: {
+            total: 100,
+            page_size: 5,
+            current_page: 1,
+            next_text: 'التالي',
+            prev_text: 'السابق',
+            start: 1,
+            end: 100,
+            data: [],
+        },
         search: '',
         isUserActive: false,
         editModal: false,
@@ -292,6 +369,7 @@ export default {
         buttonLoading: false,
         categories: [],
         categoriesSelect: [],
+        loggedInRoles: '',
         addItemTocategory: {
             items: '',
             itemId: [],
@@ -323,15 +401,18 @@ export default {
             urlOption: [
                 {
                     value: '1',
-                    label: 'SuperAdmin'
+                    label: 'SuperAdmin',
+                    role: 'SuperAdmin'
                 },
                 {
                     value: '2',
-                    label: 'Admin'
+                    label: 'Admin',
+                    role: 'SuperAdmin'
                 },
                 {
                     value: '3',
-                    label: 'Vendor'
+                    label: 'Vendor',
+                    role: 'Admin'
                 },
             ],
         },
@@ -341,6 +422,14 @@ export default {
             mobileNumber: '',
             government: '',
             district: '',
+        },
+        addVendorModal: false,
+        addVendor: {
+            name: '',
+            mobileNumber: '',
+            government: '',
+            district: '',
+            homeRecieve: '',
         },
         governorate: [
             {
@@ -421,7 +510,7 @@ export default {
     mounted() {
         this.getUsers();
         this.getAllCategories();
-        this.gteAllitems();
+        this.getAllitems();
     },
     computed: {
         filteredUsers: function() {
@@ -431,9 +520,10 @@ export default {
                 user.government.toLowerCase().match(this.search.toLowerCase()) || 
                 user.district.toLowerCase().match(this.search.toLowerCase());
             });
-        }
+        },
     },
     methods: {
+        
       // format date
       formatDate(date) {
           return moment(date).format('YYYY-MM-DD');
@@ -539,6 +629,13 @@ export default {
                 }
             });
         },
+        trimed_data(data) {
+            this.pagination.start = (this.pagination.current_page - 1) * this.pagination.page_size;
+            this.pagination.end = this.pagination.start + this.pagination.page_size;
+            this.pagination.data = data.reverse().slice(this.pagination.start, this.pagination.end) || [];
+
+            return this.pagination.data;
+        },
 
         // get all users
         getUsers() {
@@ -549,21 +646,31 @@ export default {
                     Authorization: 'bearer ' + userInfo.token
                 }
             }).then((result) => {
-                this.tableData = result.data.reverse();
+                this.pagination.total = result.data.length;
+                this.tableData = this.trimed_data(result.data);
                 this.endPageLoading();
             }).catch((err) => {
                 if(err.response === 401) {
                     this.notify('error','','تم انهاء مهلة الاتصال');
+                    this.$router.push({path: '/'});
+                    localStorage.removeItem('loggedInUser');
                 } else if(err.response === 400) {
                     this.notify('error','','حدثت مشكلة في ارسال البيانات');
                 } else if(err.response === 404) {
                     this.notify('error','','حدثت مشكلة في الحصول على الطلب');
                 } else {
                     this.notify("error", "","لا يوجد اتصال بالانترنت","3000");
+                    this.$router.push({path: '/'});
+                    localStorage.removeItem('loggedInUser');
                 }
                 
                 this.endPageLoading();
             });
+        },
+
+        paginationCurrentChange(e) {
+            this.pagination.current_page = e;
+            this.getUsers();
         },
 
         // create new account
@@ -634,7 +741,7 @@ export default {
                     }).then((result) => {
                         this.getUsers();
                         this.notify('success', '','تم اضافة المستخدم بنجاح');
-                        this.createUser = false;
+                        // this.createUser = false;
                         this.buttonLoading = false;
                     }).catch((err) => {
                         if(err.response.data === '-20007') {
@@ -712,6 +819,7 @@ export default {
                     }
                 }).then((result) => {
                     this.tableData.splice(index, 1);
+                    this.getUsers();
                     this.notify('success', '','تم حذف المستخدم بنجاح ');
                 }).catch((e) => {
                     console.error(e.response);
@@ -832,7 +940,7 @@ export default {
                 if(response.data.length > 0) {
                     this.categoiresModal = false;
                     this.endPageLoading();
-                    this.$router.push({path: `categories/${this.selectedUser}`, params: this.selectedUser});
+                    this.$router.push({path: `user/categories/${this.selectedUser}`, params: this.selectedUser});
                 } else {
                     this.endPageLoading();
                     this.categoiresModal = true;
@@ -842,7 +950,7 @@ export default {
             });
         },
 
-        gteAllitems() {
+        getAllitems() {
             let self = this;
             let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
             let token = jsonInfo.token;
@@ -883,7 +991,83 @@ export default {
                     this.notify("error", e.response.status, e.response.statusText);
                 }
             });
-        }
+        },
+
+        checkVendor(id) {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            this.startPageLoading();
+
+            self.axios.get(`${APIS.API_URL}/vendor/getVendorByUserId?userId=${id}`, {
+                headers: {
+                    Authorization: 'bearer ' + token
+                }
+            }).then(response => {
+                if(response.data) {
+                    this.addVendorModal = false;
+                    this.endPageLoading();
+                    this.$router.push({path: `user/vendor/${this.selectedUser}`, params: this.selectedUser});
+                } else {
+                    this.endPageLoading();
+                    this.addVendorModal = true;
+                }
+            }).catch(error => {
+                console.error(error.response);
+            });
+        },
+
+        doAddVendor() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            let object = {
+                userId: self.selectedUser,
+                name: self.addVendor.name,
+                mobileNumber: self.addVendor.mobileNumber,
+                government: self.addVendor.government,
+                district: self.addVendor.district,
+                homeRecieve: Number(self.addVendor.homeRecieve)
+            };
+
+            self.buttonLoading = true;
+
+            if(this.isEmpty(self.addVendor.name)) {
+                this.notify('error', '','لا يمكن ترك الاسم فارغ');
+                this.buttonLoading = false;
+            } else if(this.isEmpty(self.addVendor.mobileNumber)) {
+                this.notify('error', '' , 'لا يمكن ترك رقم الهاتف فارغ');
+                this.buttonLoading = false;
+            } else if(this.isNumberValid(self.addVendor.mobileNumber) == false) {
+                this.notify('error', '','الرقم غير صحيح يجب ان يكون مسبوق بــ +964');
+                this.buttonLoading = false;
+            } else if(this.isEmpty(self.addVendor.district)) {
+                this.notify('error', '' , 'يرجا كتابة اسم المنطقة');
+                this.buttonLoading = false;
+            } else if(this.isEmpty(self.addVendor.government)) {
+                this.notify('error', '' , 'يرجا اختيار المحافظة');
+                this.buttonLoading = false;
+            } else {
+                self.axios.post(`${APIS.API_URL}/vendor/addVendor`, object , {
+                    headers: {
+                        Authorization: `bearer ${token}`
+                    }
+                }).then(response => {
+                    self.notify('success', '','تم اضافة المحل بنجاح');
+                    self.addVendorModal = false;
+                    self.getUsers();
+                }).catch(error => {
+                    console.error(error.response);
+                    self.notify('error',error.response.status,error.response.statusText)
+                });
+            }
+        },
+
+        loggedInUserInfo: () => {
+            let info = JSON.parse(localStorage.getItem('loggedInUser')),
+                roles = info.roles.join(",");
+            return roles;
+        },
     }
 }
 </script>

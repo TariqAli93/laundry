@@ -27,9 +27,14 @@
             <span slot="title">المواد</span>
           </el-menu-item>
 
-          <el-menu-item route="/" index="5">
+          <el-menu-item route="/support" index="5">
             <i class="el-icon-chat-line-square"></i>
             <span slot="title">الدعم الفني</span>
+          </el-menu-item>
+          
+          <el-menu-item route="/reports" index="6">
+            <i class="el-icon-document"></i>
+            <span slot="title">التقارير</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -66,7 +71,7 @@ export default {
   data() {
     return {
       isLoggedIn: false,
-      isCollapsedMenu: false,
+      isCollapsedMenu: true,
       beforeCreate: '',
       beforeUpdate: '',
       mainElementClass: false,
@@ -140,8 +145,26 @@ export default {
 </script>
 
 <style lang="scss">
+  .el-dialog {
+    @media (max-width: 767px) {
+      width: 80% !important;
+    }
+  }
   #mainApp {
     min-height: 100vh;
+
+    .pagination-wrapper {
+      padding: 10px;
+      background: whitesmoke;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: max-content;
+      margin: 0 auto;
+      margin-top: 30px;
+      border: 1px solid rgba(black, .20);
+    }
 
     .el-table {
       border: none !important;
@@ -224,24 +247,40 @@ export default {
             padding: 0;
             width: 75px;
             height: 100%;
+
+            .el-menu-item {
+              span {
+                visibility: hidden;
+                opacity: 0;
+                transition: all ease-in-out 400ms;
+              }
+            }
         }
+
         .el-menu-item {
           border-right: 3px solid transparent;
+          transition: all ease-in-out 350ms;
 
           &.is-active {
             background-color: rgb(14, 97,117) !important;
             border-right-color: white;
           }
+
           i {
             color: white;
             margin-right: unset !important;
             margin-left: 10px;
           }
+
+          span {
+            visibility: visible;
+            opacity: 1;
+          }
         }
       }
 
       .header {
-        background: white;
+        background: #106F86;
         box-shadow: 0 2px 10px 0 rgba(black , .20);
         display: flex;
         align-items: center;
@@ -261,13 +300,29 @@ export default {
           .toggleMenu-line {
             display: block;
             width: 30px;
-            background: black;
+            background: white;
             height: 3px;
             border-radius: 10px;
             
 
             &:not(:last-child) {
               margin-bottom: 5px;
+            }
+          }
+        }
+
+        .el-menu {
+          background: transparent ;
+          color: white;
+
+          .el-submenu {
+            .el-submenu__title {
+                color: white;
+                background: transparent;
+
+                i {
+                  color: white;
+                }
             }
           }
         }

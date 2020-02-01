@@ -11,6 +11,16 @@
                   <el-button @click="updateModal = true; getUserCategories(updatedCategories, cateData)" type="primary" icon="el-icon-edit"> تعديل التصنيفات</el-button>
               </el-col>
           </el-row>
+          
+          <el-dialog title="تحديث المواد" :visible.sync="updateItemModal">
+            <el-form :model="updateItemsForm" label-position="top">
+                <el-form-item label="السعر">
+                    <el-input v-model="updateItemsForm.updateItemPrice"></el-input>
+                </el-form-item>
+
+                <el-button icon="el-icon-plus" type="primary" style="margin-top: 30px;" @click="itemUpdate()"> حفظ التعديلات</el-button>
+            </el-form>
+        </el-dialog>
         
         <el-dialog title="تعديل التصنيفات" :visible.sync="updateModal">
             <el-row style="margin-bottom: 30px;">
@@ -24,22 +34,50 @@
             <el-button @click="update(userId)" type="primary" icon="el-iocn-plus"> حفظ المتصنيفات</el-button>
         </el-dialog>
 
+        <el-dialog title="المواد" :visible.sync="itemModal" @close="items = []; itemTableLoading = true;">
+            <table class="el-table el-table__body" v-loading="itemTableLoading">
+                <thead>
+                    <tr>
+                        <th>اسم المادة</th>
+                        <th>تاريخ الاضافة</th>
+                        <th>الوصف</th>
+                        <th>السعر</th>
+                        <th>العمليات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="el-table__row" v-for="(item, index) in items" :key="item.id">
+                    <td>{{ item.item.name }}</td>
+                    <td>{{ formatDate(item.createdAt) }}</td>
+                    <td>{{ item.item.description }}</td>
+                    <td>{{ item.price }} <b v-if="item.price.length < 8">دينار عراقي</b> </td>
+                    <td>
+                        <el-tooltip placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
+                            <el-button size="mini" @click="updateItemModal = true; updateItemsForm.updateItemId = item.id;" type="warning" icon="el-icon-edit"></el-button>
+                        </el-tooltip>
+
+                        <el-tooltip placement="bottom" content="حذف" effect="light" :visible-arrow="false">
+                            <el-button size="mini" @click="itemRemove(item.id, index);" type="danger" icon="el-icon-delete"></el-button>
+                        </el-tooltip>
+                    </td>
+                    </tr>
+                </tbody>
+            </table>
+        </el-dialog>
+
           <div v-if="cateData.length < 1" style="display: flex; align-items: center; justify-content: center; background: whitesmoke; padding: 10px 0px; width: 100%">لا توجد بيانات</div>
           <table v-if="cateData" class="el-table el-table__body">
               <thead>
                   <tr>
-                      <th>#</th>
                       <th>اسم التصنيف</th>
                       <th>تاريخ الاضافة</th>
                       <th>الوصف</th>
                       <th>الصورة</th>
-                      <th>المواد</th>
                       <th>العمليات</th>
                   </tr>
               </thead>
               <tbody>
                   <tr class="el-table__row" v-for="(cates, index) in cateData" :key="cates.id">
-                      <td>{{ cates.category.id }}</td>
                       <td>{{ cates.category.name }}</td>
                       <td>{{ formatDate(cates.category.createdAt) }}</td>
                       <td>{{ cates.category.description }}</td>
@@ -51,10 +89,12 @@
                           </el-image>
                       </td>
                       <td>
-                          
-                      </td>
-                      <td>
-                          <el-button @click="remove(cates.id, index)" type="danger" icon="el-icon-delete"></el-button>
+                          <el-tooltip placement="bottom" content="عرض المواد" effect="light" :visible-arrow="false">
+                              <el-button @click="getUserItem(cates.category.id); itemModal = true; tempId = cates.category.id" type="info" icon="el-icon-s-goods"></el-button>
+                          </el-tooltip>
+                          <el-tooltip placement="bottom" content="حذف" effect="light" :visible-arrow="false">
+                            <el-button @click="remove(cates.id, index)" type="danger" icon="el-icon-delete"></el-button>
+                          </el-tooltip>
                       </td>
                   </tr>
               </tbody>
@@ -81,19 +121,16 @@ export default {
             images: APIS.IMAGES_URL,
             imageslist: [],
             userId: '',
+            tempId: '',
             userName: '',
-            itemsName: [
-                {
-                    item: {
-                        name: 'test'
-                    }
-                },
-                {
-                    item: {
-                        name: 'tariq'
-                    }
-                },
-            ],
+            items: [],
+            itemModal: false,
+            itemTableLoading: true,
+            updateItemModal: false,
+            updateItemsForm: {
+                updateItemPrice: '',
+                updateItemId: '',
+            }
         }
     },
     mounted() {
@@ -232,9 +269,7 @@ export default {
                 this.endPageLoading();
             }).catch(e => {
                 this.notify("error", e.response.status, e.response.statusText, 3500);
-                console.log(e.response);
                 this.endPageLoading();
-
                 setTimeout(() => {
                     this.$router.push({name: 'categories'});
                 }, 3500)
@@ -271,23 +306,78 @@ export default {
         },
 
         // get items from users
-        getUserItem(categoryId) {
+        getUserItem(categoryId = null) {
             let self = this;
             let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
             let token = jsonInfo.token;
 
-            self.axios.get(`${APIS.API_URL}/items/getUserItems?UserId=${self.userId}&CategoryId=16`, {
+            self.axios.get(`${APIS.API_URL}/items/getUserItems?UserId=${self.userId}&CategoryId=${categoryId}`, {
                 headers: {
                     Authorization: `bearer ${token}`
                 }
             }).then(response => {
+                self.items = response.data
+                self.itemTableLoading = false;
                 console.log(response);
-                // self.itemsName = response.data
             }).catch(error => {
+                self.itemTableLoading = false;
                 console.error(error.response);
             });
-            console.log(categoryId)
-        } 
+        },
+
+        // update item
+        itemUpdate() {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+            self.startPageLoading();
+
+            self.axios.put(`${APIS.API_URL}/items/updateUserItem`, {
+                id: Number(self.updateItemsForm.updateItemId),
+                price: self.updateItemsForm.updateItemPrice
+            } , {
+                headers: {
+                    Authorization: `bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                self.getUserItem(self.tempId);
+                self.notify('success','','تم التحديث بنجاح');
+                self.endPageLoading();
+                self.updateItemModal = false;
+            }).catch(error => {
+                self.notify('error', error.response.status, error.response.statusText);
+                console.error(error.response);
+                self.endPageLoading();
+            });
+
+        },
+
+        itemRemove(id, i) {
+            let self = this;
+            let jsonInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+            let token = jsonInfo.token;
+
+            self.$confirm('هل انت متاكد من حذف هذه المادة', 'Warning',{
+                type: 'warning'
+            }).then(() => {
+                self.axios.delete(`${APIS.API_URL}/items/deleteUserItem?id=${id}`, {
+                    headers: {
+                        Authorization: 'bearer ' + token 
+                    }
+                }).then(() => {
+                    self.items.splice(i, 1);
+                    self.notify('success','','تم الحذف بنجاح');
+                    self.endPageLoading();
+                }).catch((e) => {
+                    self.notify('error' , e.response.status, e.response.statusText);
+                    self.endPageLoading();
+                    console.error(e.response);
+                });
+            }).catch(() => {
+                self.notify('error' , '','تم الغاء الاجراء');
+            })
+        }
     }
 }
 </script>

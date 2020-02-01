@@ -73,15 +73,15 @@
                 </tr>
             </thead>
             <tbody>
-                <tr class="el-table__row" v-for="(item, index) in items" :key="item.id">
+                <tr class="el-table__row" v-for="(item, index) in filterdItem" :key="item.id">
                   <td>{{ item.name }}</td>
                   <td>{{ formatDate(item.createdAt) }}</td>
                   <td>{{ item.description }}</td>
                   <td>
-                    <el-tooltip placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
+                    <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin')" placement="bottom" content="تعديل" effect="light" :visible-arrow="false">
                         <el-button @click="updateItem.id = item.id; updateModal = true; updateItem.name = item.name; updateItem.description = item.description" type="warning" icon="el-icon-edit"></el-button>
                     </el-tooltip>
-                    <el-tooltip placement="bottom" content="حذف" effect="light" :visible-arrow="false">
+                    <el-tooltip v-if="loggedInUserInfo().includes('SuperAdmin')" placement="bottom" content="حذف" effect="light" :visible-arrow="false">
                         <el-button @click="remove(item.id, index);" type="danger" icon="el-icon-delete"></el-button>
                     </el-tooltip>
                   </td>
@@ -128,6 +128,13 @@ export default {
     },
     mounted() {
         this.getItems();
+    },
+    computed: {
+      filterdItem: function() {
+        return this.items.filter(item => {
+          return item.name.toLowerCase().match(this.search.toLowerCase());
+        })
+      }
     },
     methods: {
       // format date
@@ -256,7 +263,7 @@ export default {
           }
 
           if(err.response.data === '-20012') {
-            console.log(err.response);
+            console.error(err.response);
           }
           self.endPageLoading();
         });
@@ -284,6 +291,12 @@ export default {
           this.notify('error',e,'تم الغاء الاجراء');
         });
       },
+
+      loggedInUserInfo: () => {
+          let info = JSON.parse(localStorage.getItem('loggedInUser')),
+              roles = info.roles.join(",");
+          return roles;
+      }
     }
 }
 </script>

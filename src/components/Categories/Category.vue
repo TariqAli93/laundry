@@ -23,7 +23,7 @@
                   </tr>
               </thead>
               <tbody>
-                  <tr class="el-table__row" v-for="(cates, index) in cateData" :key="cates.id">
+                  <tr class="el-table__row" v-for="(cates, index) in filterdCategories" :key="cates.id">
                       <td>{{ cates.name }}</td>
                       <td>{{ formatDate(cates.createdAt) }}</td>
                       <td>{{ cates.description }}</td>
@@ -35,7 +35,7 @@
                           </el-image>
                       </td>
                       <td>
-                          <el-button @click="updateModal = true; uid = cates.id; beforeUpdate(uid)" type="warning" icon="el-icon-edit"></el-button>
+                          <el-button v-if="loggedInUserInfo().includes('SuperAdmin')" @click="updateModal = true; uid = cates.id; beforeUpdate(uid)" type="warning" icon="el-icon-edit"></el-button>
                           <!-- <el-button @click="remove(cates.id, index)" type="danger" icon="el-icon-delete"></el-button> -->
                       </td>
                   </tr>
@@ -122,7 +122,13 @@ export default {
         this.getAllCategories();
     },
 
-    computed: {},
+    computed: {
+        filterdCategories: function() {
+            return this.cateData.filter((cates) => {
+                return cates.name.toLowerCase().match(this.search.toLowerCase())
+            })
+        }
+    },
     methods: {
         // format date
       formatDate(date) {
@@ -336,6 +342,12 @@ export default {
                 this.endPageLoading();
             });
         },
+
+        loggedInUserInfo: () => {
+            let info = JSON.parse(localStorage.getItem('loggedInUser')),
+                roles = info.roles.join(",");
+            return roles;
+        }
     },
     
 }

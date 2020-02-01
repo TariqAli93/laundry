@@ -5,7 +5,11 @@ import LoginComponent from '../views/Login'
 import Users from '../views/Users'
 import Categories from '../views/Categories'
 import ShowCategory from '../components/Categories/showCategory'
+import showVendor from '../components/Vendor/showVendor'
 import Items from '../views/Items'
+import Support from "../views/Support";
+import Reports from "../views/Reports";
+
 
 Vue.use(VueRouter)
 
@@ -31,14 +35,29 @@ const routes = [
     component: Categories
   },
   {
-    path: '/categories/:id',
+    path: '/user/categories/:id',
     name: 'showcategory',
     component: ShowCategory
+  },
+  {
+    path: '/user/vendor/:id',
+    name: 'showvendor',
+    component: showVendor
   },
   {
     name: 'items',
     path: '/items',
     component: Items
+  },
+  {
+    name: 'support',
+    path: '/support',
+    component: Support
+  },
+  {
+    name: 'reports',
+    path: '/reports',
+    component: Reports
   }
 ]
 
