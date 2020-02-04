@@ -210,7 +210,7 @@ export default {
                 this.notify('error', '','وصف التصنيف مطلوب');
                 this.buttonLoading = false;
             } else if(this.isEmpty(this.cimage)) {
-                this.notify('warning', '','يرجا اختيار صورة');
+                this.notify('warning', '','يرجى اختيار صورة');
                 this.buttonLoading = false;
             } else {
                 this.startPageLoading();
@@ -228,8 +228,19 @@ export default {
                 }).catch((err) => {
                     this.endPageLoading();
                     this.buttonLoading = false;
-                    this.notify('error', err.response.status, 'حدث خطاء ما');
-                    console.error(err.response);
+
+                    if(err.response.status === 400) {
+                        this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                    } else if(err.response.status === 401) {
+                        this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                        this.$router.push({name: 'LoginPage'});
+                        localStorage.removeItem('loggedInUser');
+                    } else if(!err.response.status) {
+                        this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                    } else {
+                        this.notify('error', err.response.status, 'حدث خطاء ما');
+                        console.error(err.response);
+                    }
                 });   
             }
         },
@@ -249,7 +260,18 @@ export default {
                 this.uname = result.data.name;
                 this.udesc = result.data.description;
             }).catch((err) => {
-                console.error(err.response);
+                if(err.response.status === 400) {
+                    this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                } else if(err.response.status === 401) {
+                    this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                    this.$router.push({name: 'LoginPage'});
+                    localStorage.removeItem('loggedInUser');
+                } else if(!err.response.status) {
+                    this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                } else {
+                    this.notify('error', err.response.status, 'حدث خطاء ما');
+                    console.error(err.response);
+                }
             })
         },
 
@@ -272,7 +294,7 @@ export default {
                 this.notify('error', '','وصف التصنيف مطلوب');
                 this.buttonLoading = false;
             } else if(this.isEmpty(this.uimage)) {
-                this.notify('warning', '','يرجا اختيار صورة');
+                this.notify('warning', '','يرجى اختيار صورة');
                 this.buttonLoading = false;
             } else {
                 this.startPageLoading();
@@ -290,7 +312,18 @@ export default {
                 }).catch((err) => {
                     this.endPageLoading();
                     this.buttonLoading = false;
-                    this.notify('error', err.response.status, 'حدث خطاء ما');
+                    if(err.response.status === 400) {
+                        this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                    } else if(err.response.status === 401) {
+                        this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                        this.$router.push({name: 'LoginPage'});
+                        localStorage.removeItem('loggedInUser');
+                    } else if(!err.response.status) {
+                        this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                    } else {
+                        this.notify('error', err.response.status, 'حدث خطاء ما');
+                        console.error(err.response);
+                    }
                 });   
             }
         },
@@ -311,8 +344,19 @@ export default {
                 }).then(() => {
                     this.cateData.splice(i, 1);
                     this.notify('success','','تم الحذف بنجاح');
-                }).catch((e) => {
-                    this.notify('error' , '','تم الغاء الاجراء');
+                }).catch((err) => {
+                    if(err.response.status === 400) {
+                        this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                    } else if(err.response.status === 401) {
+                        this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                        this.$router.push({name: 'LoginPage'});
+                        localStorage.removeItem('loggedInUser');
+                    } else if(!err.response.status) {
+                        this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                    } else {
+                        this.notify('error', err.response.status, 'حدث خطاء ما');
+                        console.error(err.response);
+                    }
                 });
             }).catch(() => {
                 this.notify('error' , '','تم الغاء الاجراء');
@@ -336,8 +380,17 @@ export default {
                 }
                 this.endPageLoading();
             }).catch((err) => {
-                if(!err.status) {
-                    this.notify("error", "","لا يوجد اتصال بالانترنت","3000");
+                if(err.response.status === 400) {
+                    this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                } else if(err.response.status === 401) {
+                    this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                    this.$router.push({path: '/'});
+                    localStorage.removeItem('loggedInUser');
+                } else if(!err.response.status) {
+                    this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                } else {
+                    this.notify('error', err.response.status, 'حدث خطاء ما');
+                    console.error(err.response);
                 }
                 this.endPageLoading();
             });

@@ -233,7 +233,18 @@ export default {
             self.endPageLoading();
         }).catch((err) => {
             self.endPageLoading();
-            console.error(err.response);
+            if(err.response.status === 400) {
+                  this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+              } else if(err.response.status === 401) {
+                  this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                  this.$router.push({name: 'LoginPage'});
+                  localStorage.removeItem('loggedInUser');
+              } else if(!err.response.status) {
+                  this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+              } else {
+                  this.notify('error', err.response.status, 'حدث خطاء ما');
+                  console.error(err.response);
+              }
         });
       },
 
@@ -258,7 +269,18 @@ export default {
             self.endPageLoading();
         }).catch((err) => {
             self.endPageLoading();
-            console.error(err.response)
+            if(err.response.status === 400) {
+                this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+            } else if(err.response.status === 401) {
+                this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                this.$router.push({name: 'LoginPage'});
+                localStorage.removeItem('loggedInUser');
+            } else if(!err.response.status) {
+                this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+            } else {
+                this.notify('error', err.response.status, 'حدث خطاء ما');
+                console.error(err.response);
+            }
         });
       },
 
@@ -303,9 +325,20 @@ export default {
                 self.vendor = [];
                 self.getVendorByUserId();
                 self.endPageLoading();
-            }).catch(error => {
+            }).catch(err => {
                 self.endPageLoading();
-                console.error(error.response);
+                if(err.response.status === 400) {
+                    this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+                } else if(err.response.status === 401) {
+                    this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                    this.$router.push({name: 'LoginPage'});
+                    localStorage.removeItem('loggedInUser');
+                } else if(!err.response.status) {
+                    this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+                } else {
+                    this.notify('error', err.response.status, 'حدث خطاء ما');
+                    console.error(err.response);
+                }
             });
         }
       }

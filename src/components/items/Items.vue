@@ -199,9 +199,20 @@ export default {
             this.getItems();
             this.notify('success', '','تم الاضافة بنجاح');
             self.endPageLoading();
-          }).catch(e => {
+          }).catch(err => {
             self.endPageLoading();
-            console.error(e.response);
+            if(err.response.status === 400) {
+                this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+            } else if(err.response.status === 401) {
+                this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                this.$router.push({name: 'LoginPage'});
+                localStorage.removeItem('loggedInUser');
+            } else if(!err.response.status) {
+                this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+            } else {
+                this.notify('error', err.response.status, 'حدث خطاء ما');
+                console.error(err.response);
+            }
           });
         }
       },
@@ -228,8 +239,19 @@ export default {
             this.updateModal = false;
             this.getItems();
             self.endPageLoading();
-          }).catch(e => {
-            console.error(e.response);
+          }).catch(err => {
+            if(err.response.status === 400) {
+                this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+            } else if(err.response.status === 401) {
+                this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                this.$router.push({name: 'LoginPage'});
+                localStorage.removeItem('loggedInUser');
+            } else if(!err.response.status) {
+                this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+            } else {
+                this.notify('error', err.response.status, 'حدث خطاء ما');
+                console.error(err.response);
+            }
             self.endPageLoading();
           });
         }
@@ -248,26 +270,20 @@ export default {
           self.items = response.data;
           self.endPageLoading();
         }).catch((err) => {
-          switch(err.response.status) {
-            case 400:
-              self.notify('error','مشكلة في البيانات', 'حدث خطأ في ارسال البيانات الى الخادم',4500);
-              break;
-            case 401:
-              self.notify('error','خطأ في المصادقة','حدث خطا في المصادقة مع الخادم يرجا اعادة تسجيل الدخول',4500);
-              break;
-            case 500:
-              self.notify('error', 'خطاء في الخادم', 'حدث خطأ في الوصول الى الخادم يرجا اعادة المحاولة');
-              break;
-            default:
-              self.notify('error', 'خطاء في الاتصال', 'حدث خطأ في الوصول الى الانرتنت');
-          }
-
-          if(err.response.data === '-20012') {
-            console.error(err.response);
+          if(err.response.status === 400) {
+              this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+          } else if(err.response.status === 401) {
+              this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+              this.$router.push({name: 'LoginPage'});
+              localStorage.removeItem('loggedInUser');
+          } else if(!err.response.status) {
+              this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+          } else {
+              this.notify('error', err.response.status, 'حدث خطاء ما');
+              console.error(err.response);
           }
           self.endPageLoading();
         });
-
       },
       // delete
       remove(id, index) {
@@ -284,8 +300,19 @@ export default {
           }).then(response => {
             this.items.splice(index, 1);
             this.notify('success','','تم الحذف بنجاح');
-          }).catch(e => {
-            this.notify('error', e.response.status, 'تم الغاء الاجراء');
+          }).catch(err => {
+              if(err.response.status === 400) {
+                  this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+              } else if(err.response.status === 401) {
+                  this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+                  this.$router.push({name: 'LoginPage'});
+                  localStorage.removeItem('loggedInUser');
+              } else if(!err.response.status) {
+                  this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+              } else {
+                  this.notify('error', err.response.status, 'حدث خطاء ما');
+                  console.error(err.response);
+              }
           })
         }).catch((e) => {
           this.notify('error',e,'تم الغاء الاجراء');

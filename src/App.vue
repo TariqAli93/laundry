@@ -52,6 +52,10 @@
               <el-menu-item @click="logout()" index="1-1">
                 تسجيل الخروج
               </el-menu-item>
+              
+              <el-menu-item @click="updateUserPasswordModel = true;" index="1-2">
+                تعديل كلمة المرور
+              </el-menu-item>
             </el-submenu>
           </el-menu>
         </el-header>
@@ -61,7 +65,26 @@
         </el-main>
       </el-container>
     </el-container>
-    
+
+    <el-dialog title="تعديل كلمة المرور" :visible.sync="updateUserPasswordModel">
+        <el-form :model="updateUserPasswordForm" label-position="top">
+            <el-row :gutter="30">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+                    <el-form-item label="كلمة المرور القديمة">
+                        <el-input v-model="updateUserPasswordForm.old" type="password" show-password></el-input>
+                    </el-form-item>
+                </el-col>
+
+
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+                    <el-form-item label="كلمة المرور الجديدة">
+                        <el-input v-model="updateUserPasswordForm.new" type="password" show-password></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-button type="primary"@click="updatePassword(updateUserPasswordForm)" icon="el-icon-edit">تعديل</el-button>
+        </el-form>
+    </el-dialog>
   </div>
 </template>
 
@@ -76,6 +99,11 @@ export default {
       beforeUpdate: '',
       mainElementClass: false,
       activeIndex: null,
+      updateUserPasswordModel: false,
+      updateUserPasswordForm: {
+          new: '',
+          old: '',
+      },
     }
   },
 
@@ -121,9 +149,10 @@ export default {
 
     // logout
     logout() {
-      // this.$router.push({name: 'LoginPage'});
+      this.$router.push({name: 'LoginPage'});
       localStorage.removeItem('loggedInUser');
       this.isLoggedIn = false;
+      this.mainElementClass = false;
     },
 
     // toggle collapse menu
@@ -132,6 +161,61 @@ export default {
         this.isCollapsedMenu = false;
       } else {
         this.isCollapsedMenu = true;
+      }
+    },
+
+    notify(type, title = null, message, duration = 1500) {
+        this.$notify({
+            title: title,
+            message: message,
+            type: type,
+            duration: duration
+        });
+    },
+
+    updatePassword(form) {
+      let password = {
+        old: form.old,
+        new: form.new
+      };
+      let userInfo = JSON.parse(localStorage.getItem('loggedInUser'));
+      let uID = userInfo.id;
+
+      if(password.new === '' || password.new.length < 1 || password.new === undefined || password.new === null) {
+        this.notify('error', '','لا يمكن ان تكون كلمة المرور الجديدة فارغة', 4000);
+      } else if(password.old === '' || password.old.length < 1 || password.old === undefined || password.old === null) {
+        this.notify('error', '','يرجى كتابة كلمة المرور القديمة', 4000);
+      } else if(password.new === password.old) {
+        this.notify('error', '','كلمة المرور الجديدة مشابهة لكلمة المرور القديمة', 4000);
+      } else {
+        this.axios.put(`${APIS.API_URL}/users/changePassword`, {
+          id: uID,
+          password: password.old,
+          newPassword: password.new
+        }, {
+          headers: {
+              Authorization: 'bearer ' + userInfo.token,
+              "Content-Type": "application/json"
+          }
+        })
+        .then(response => {
+          this.notify('success','','تم تحديث كلمة المرور بنجاح');
+          this.logout();
+          this.updateUserPasswordModel = false;
+        }).catch(err => {
+          if(err.response.status === 400) {
+              this.notify('error', err.response.status, 'خطأ في ارسال البيانات');
+          } else if(err.response.status === 401) {
+              this.notify('error', err.response.status, 'تم انتهاء مدة الاتصال');
+              this.$router.push({name: 'LoginPage'});
+              localStorage.removeItem('loggedInUser');
+          } else if(!err.response.status) {
+              this.notify('error', '', 'لا يوجد اتصال بالانترنت');
+          } else {
+              this.notify('error', err.response.status, 'حدث خطاء ما');
+              console.error(err.response);
+          }
+        });
       }
     },
 
